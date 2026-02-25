@@ -14,6 +14,7 @@ struct Municipio {
 
 struct NO{
     struct Municipio info;
+    int altura;
     struct NO *esq;
     struct NO *dir;
 };
@@ -146,9 +147,9 @@ int contarMunicipios(ArvBin *raiz){
         return 0;
     if (*raiz == NULL)
         return 0;
-    int alt_esq = contarMunicipios(&((*raiz)->esq));
-    int alt_dir = contarMunicipios(&((*raiz)->dir));
-    return(alt_esq + alt_dir + 1);
+    int qtd_esq = contarMunicipios(&((*raiz)->esq));
+    int qtd_dir = contarMunicipios(&((*raiz)->dir));
+    return(qtd_esq + qtd_dir + 1);
 }
 
 void mostrarPopulacaoMaiorQue(ArvBin* raiz, int x) {
@@ -228,8 +229,75 @@ struct Municipio cidadeMaiorPopulacao(ArvBin* raiz) {
         return maiorEsq;
     }
     return maiorDir;
+}
 
+/* FUNÇÕES EXTRAS */
+int buscaPorNome(ArvBin* raiz, char* nome) {
+    if(raiz == NULL) return 0;
+    if(*raiz == NULL) return 0;
+    if (strcmp((*raiz)->info.nome, nome) == 0) {
+        return 1; // cidade encontrada
+    }
+    if (buscaPorNome(&(*raiz)->esq, nome)) {
+        return 1;
+    }
+    return buscaPorNome(&(*raiz)->dir, nome);
 
+    // 0 = cidade nao encontrada
+}
+
+struct NO* encontrarMinimo(struct NO* no) {
+    struct NO* atual = no;
+    while (atual && atual->esq != NULL)
+        atual = atual->esq;
+    return atual;
+}
+
+struct NO* removeMunicipio(ArvBin* raiz, char* nome) {
+    if(raiz == NULL) return NULL;
+    if(*raiz == NULL) return NULL;
+
+    if (strcmp((*raiz)->info.nome, nome) > 0) {
+        (*raiz)->esq = removeMunicipio(&(*raiz)->esq, nome);
+    }else if (strcmp((*raiz)->info.nome, nome) < 0) {
+        (*raiz)->dir = removeMunicipio(&(*raiz)->dir, nome);
+    }else {
+        if ((*raiz)->esq == NULL) {
+            struct NO* temp = (*raiz)->dir;
+            free(*raiz);
+            return temp;
+        }else if ((*raiz)->dir == NULL) {
+            struct NO* temp = (*raiz)->esq;
+            free(*raiz);
+            return temp;
+        }
+
+        struct NO* temp = encontrarMinimo((*raiz)->dir);
+        (*raiz)->info = temp->info;
+        /*
+        A linha "(*raiz)->dir = removeMunicipio(&(*raiz)->dir, temp->info);" é o que faz funcionar.
+        Ela faz uma nova chamada recursiva para deletar o nó que acabou de ser copiado.
+        Como o sucessor é, por regra, o menor da direita, ele nunca terá um filho à esquerda,
+        o que significa que essa segunda chamada de remoção cairá obrigatoriamente no caso 1 ou 2,
+        sendo resolvida instantaneamente.
+         */
+        (*raiz)->dir = removeMunicipio(&(*raiz)->dir, temp->info.nome);
+    }
+
+    return *raiz;
+}
+
+int somaPopulacao(ArvBin* raiz) {
+        if (raiz == NULL) return 0;
+        if (*raiz == NULL) return 0;
+
+        return (*raiz)->info.populacao + somaPopulacao(&(*raiz)->dir) + somaPopulacao(&(*raiz)->esq);
+}
+
+double mediaPopulacao(ArvBin* raiz) {
+    int denominador = contarMunicipios(raiz);
+    int numerador = somaPopulacao(raiz);
+    return (double) numerador / denominador;
 }
 
 
@@ -237,7 +305,9 @@ struct Municipio cidadeMaiorPopulacao(ArvBin* raiz) {
 
 
 
+// VER SE PRECISA DEPOIS
 
+/*
 
 int altura_ArvBin(ArvBin *raiz){
     if (raiz == NULL)
@@ -264,9 +334,6 @@ int consulta_ArvBin(ArvBin *raiz, struct Municipio info){
     return 0;
 }
 
-// ver se precisa depois
-
-/*
 void preOrdem_ArvBin(ArvBin *raiz){
     if(raiz == NULL)
         return;

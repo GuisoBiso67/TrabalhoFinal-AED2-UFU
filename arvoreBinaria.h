@@ -19,7 +19,6 @@ ArvBin* cria_ArvBin();
 void libera_ArvBin(ArvBin *raiz);
 int insere_ArvBin(ArvBin* raiz, struct Municipio info);
 void printAlfabeticamente_ArvBin(ArvBin *raiz); // esq -> raiz -> direita
-int remove_ArvBin(ArvBin *raiz, struct Municipio info);
 
 int contarMunicipios(ArvBin *raiz);
 void mostrarPopulacaoMaiorQue(ArvBin* raiz, int x);
@@ -30,9 +29,18 @@ double percentualBrasil(ArvBin* raiz);
 void printAlfabeticamenteCompleto_ArvBin(ArvBin *raiz);
 struct Municipio cidadeMaiorPopulacao(ArvBin* raiz);
 
+/* FUNÇÕES EXTRAS */
+int buscaPorNome(ArvBin* raiz, char* nome);
+struct NO* encontrarMinimo(struct NO* no);
+struct NO* removeMunicipio(ArvBin* raiz, char* nome);
+int somaPopulacao(ArvBin* raiz);
+double mediaPopulacao(ArvBin* raiz);
+// converter para AVL vou fazer na inserção;
+// ler arquivos de .csv
 
 
-
+struct NO* remove_atual(struct NO* atual);
+int remove_ArvBin(ArvBin *raiz, struct Municipio info);
 int estaVazia_ArvBin(ArvBin *raiz);
 int altura_ArvBin(ArvBin *raiz);
 int consulta_ArvBin(ArvBin *raiz, struct Municipio info);

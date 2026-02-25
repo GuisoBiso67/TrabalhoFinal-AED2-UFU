@@ -57,6 +57,19 @@ int main(void) {
     struct Municipio maiorPopulacao = cidadeMaiorPopulacao(arvore);
     printf("Cidade com maior populacao: %s, com %d habitantes\n", maiorPopulacao.nome, maiorPopulacao.populacao);
     printf("-----------------\n");
+    int achou = buscaPorNome(arvore, "Uberlandia");
+    if (achou == 1) {
+        printf("Uberlandia esta arvore!\n");
+    }else {
+        printf("Uberlandia nao esta na arvore!\n");
+    }
+    printf("-----------------\n");
+    removeMunicipio(arvore, "Aracaju");
+    printAlfabeticamente_ArvBin(arvore);
+    printf("-----------------\n");
+    printf("-----------------\n");
+    printf("-----------------\n");
+    printf("-----------------\n");
 
     libera_ArvBin(arvore);
 }
