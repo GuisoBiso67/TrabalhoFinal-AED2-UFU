@@ -1,16 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "arvoreBinaria.h"
-
-/*
-struct Municipio {
-    char nome[100];
-    float area; // em km²
-    int populacao;
-};
-*/
-
 
 struct NO{
     struct Municipio info;
@@ -42,21 +34,123 @@ void libera_ArvBin(ArvBin* raiz){
     free(raiz);//libera a raiz;
 }
 
+// FUNÇÕES AUXILIARES PARA INSERÇÃO AVL
+
+int altura_NO(struct NO* no){
+    if(no == NULL) return -1;
+    return no->altura;
+}
+
+int fatorBalanceamento_NO(struct NO* no){
+    return labs(altura_NO(no->esq) - altura_NO(no->dir)); // labs = valor absoluto
+}
+
+int maior(int x, int y){
+    if(x > y) return x;
+    return y;
+}
+
+int altura_ArvBin(ArvBin *raiz){
+    if (raiz == NULL)
+        return 0;
+    if (*raiz == NULL)
+        return 0;
+    int alt_esq = altura_ArvBin(&((*raiz)->esq));
+    int alt_dir = altura_ArvBin(&((*raiz)->dir));
+
+    if (alt_esq > alt_dir) return (alt_esq + 1);
+    else return(alt_dir + 1);
+}
+
+// acontece quando a árvore fica muito pesada para a esquerda;
+void RotacaoLL(ArvBin *A){
+    printf("RotacaoLL\n");
+    struct NO *B;
+    B = (*A)->esq; // B vira o novo topo;
+    (*A)->esq = B->dir; // A passa a ser filho direito de B;
+    B->dir = *A; // O filho direito de B vira filho esquerdo de A
+
+    // recalcula altura;
+    (*A)->altura = maior(altura_NO((*A)->esq), altura_NO((*A)->dir)) + 1;
+    B->altura = maior(altura_NO(B->esq),(*A)->altura) + 1;
+    *A = B; // B vira a raiz daquela subárvore.
+}
+
+// um espelho de RotacaoLL; // acontece quando a arvore fica muito pesada para a direita;
+void RotacaoRR(ArvBin *A){
+    printf("RotacaoRR\n");
+    struct NO *B;
+    B = (*A)->dir;
+    (*A)->dir = B->esq;
+    B->esq = (*A);
+    (*A)->altura = maior(altura_NO((*A)->esq),altura_NO((*A)->dir)) + 1;
+    B->altura = maior(altura_NO(B->dir),(*A)->altura) + 1;
+    (*A) = B;
+}
+
+// inseriu na esquerda, mas foi na direita da esquerda;
+// nao da para resolver com uma rotacao simples;
+void RotacaoLR(ArvBin *A) {
+    RotacaoRR(&(*A)->esq); // RotacaoRR na subarvore esquerda
+    RotacaoLL(A); // RotacaoLL na raiz;
+}
+
+// espelho de ROtacaoLR;
+void RotacaoRL(ArvBin *A){
+    RotacaoLL(&(*A)->dir);
+    RotacaoRR(A);
+}
+// ------------------------------------------
+
 int insere_ArvBin(ArvBin* raiz, struct Municipio info){
+    int res;
     if(raiz == NULL) // ponteiro valido;
         return 0;
     struct NO* novo;
     novo = (struct NO*) malloc(sizeof(struct NO));
-    if(novo == NULL)
-        return 0;
+    if(novo == NULL) return 0;
 
     novo->info = info;
+    novo->altura = 0;
     novo->dir = NULL;
     novo->esq = NULL;
 
-    if(*raiz == NULL) // arvore vazia
+    struct NO *atual = *raiz;
+
+    if(*raiz == NULL) { // arvore vazia
         *raiz = novo;
-    else{
+        return 1;
+    }else {
+        if (strcmp(info.nome, atual->info.nome) < 0) {
+            if ((res = insere_ArvBin(&(*raiz)->esq, info)) == 1) {
+                if (fatorBalanceamento_NO(atual) >= 2) {
+                    if (strcmp(info.nome, (*raiz)->esq->info.nome) < 0) { // se info.nome vier antes de raiz->info.nome;
+                        RotacaoLL(raiz);
+                    }else {
+                        RotacaoLR(raiz);
+                    }
+                }
+            }
+        }else {
+            if (strcmp(info.nome, atual->info.nome) > 0) {
+                if ((res = insere_ArvBin(&(*raiz)->dir, info)) == 1) {
+                    if (fatorBalanceamento_NO(atual) <= -2) {
+                        if (strcmp((*raiz)->dir->info.nome, info.nome) < 0) {
+                            RotacaoRR(raiz);
+                        }else {
+                            RotacaoRL(raiz);
+                        }
+                    }
+                }
+            }else {
+                printf("Valor Duplicado!\n");
+                return 0;
+            }
+        }
+    }
+    atual->altura = maior(altura_NO(atual->esq),altura_NO(atual->dir)) + 1;
+    return res;
+        /*
         struct NO* atual = *raiz;
         struct NO* ant = NULL;
 
@@ -74,8 +168,8 @@ int insere_ArvBin(ArvBin* raiz, struct Municipio info){
 
         if(strcmp(novo->info.nome, ant->info.nome) > 0) ant->dir = novo;
         else ant->esq = novo;
-    }
-    return 1;
+        */
+    //return 1;
 }
 
 struct NO* remove_atual(struct NO* atual) {
@@ -283,10 +377,10 @@ struct NO* removeMunicipio(ArvBin* raiz, char* nome) {
          */
         (*raiz)->dir = removeMunicipio(&(*raiz)->dir, temp->info.nome);
     }
-
     return *raiz;
 }
 
+// auxiliar para mediaPopulação
 int somaPopulacao(ArvBin* raiz) {
         if (raiz == NULL) return 0;
         if (*raiz == NULL) return 0;
@@ -298,6 +392,34 @@ double mediaPopulacao(ArvBin* raiz) {
     int denominador = contarMunicipios(raiz);
     int numerador = somaPopulacao(raiz);
     return (double) numerador / denominador;
+}
+
+int carregar_municipios(ArvBin *A, const char *filename) {
+    if (A == NULL) return 0;
+    //if (*A == NULL) return 0;
+
+    FILE* file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Erro ao abrir o arquivo");
+        return 0;
+    }
+
+    struct Municipio m;
+    char linha[200];
+    fgets(linha, sizeof(linha), file); // ignora linha do cabeçalho;
+
+    while (fgets(linha, sizeof(linha), file)) {
+        linha[strcspn(linha, "\n")] = '\0';
+
+        strcpy(m.nome, strtok(linha, ",")); // separa o nome
+        m.area = strtof(strtok(NULL, ","), NULL);
+        m.populacao = strtol(strtok(NULL, ","), NULL, 10);
+
+        //trim(m.nome); // retira espaços
+        insere_ArvBin(A, m);
+    }
+    fclose(file);
+    return 1;
 }
 
 

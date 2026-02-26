@@ -18,7 +18,7 @@ ArvBin* cria_ArvBin();
 
 void libera_ArvBin(ArvBin *raiz);
 int insere_ArvBin(ArvBin* raiz, struct Municipio info);
-void printAlfabeticamente_ArvBin(ArvBin *raiz); // esq -> raiz -> direita
+void printAlfabeticamente_ArvBin(ArvBin *raiz); // esq -> raiz -> direita = emOrdem
 
 int contarMunicipios(ArvBin *raiz);
 void mostrarPopulacaoMaiorQue(ArvBin* raiz, int x);
@@ -35,14 +35,26 @@ struct NO* encontrarMinimo(struct NO* no);
 struct NO* removeMunicipio(ArvBin* raiz, char* nome);
 int somaPopulacao(ArvBin* raiz);
 double mediaPopulacao(ArvBin* raiz);
+int carregar_municipios(ArvBin *A, const char *filename);
+
+// auxiliares para inserção AVL;
+int altura_NO(struct NO* no);
+int fatorBalanceamento_NO(struct NO* no);
+int maior(int x, int y);
+int altura_ArvBin(ArvBin *raiz);
+void RotacaoLL(ArvBin *A);
+void RotacaoRR(ArvBin *A);
+void RotacaoLR(ArvBin *A);
+void RotacaoRL(ArvBin *A);
+// --------------------------------------;
 // converter para AVL vou fazer na inserção;
 // ler arquivos de .csv
 
 
+// remover depois?
 struct NO* remove_atual(struct NO* atual);
 int remove_ArvBin(ArvBin *raiz, struct Municipio info);
 int estaVazia_ArvBin(ArvBin *raiz);
-int altura_ArvBin(ArvBin *raiz);
 int consulta_ArvBin(ArvBin *raiz, struct Municipio info);
 
 void preOrdem_ArvBin(ArvBin *raiz); // raiz -> esq -> dir

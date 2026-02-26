@@ -6,6 +6,7 @@
 int main(void) {
     ArvBin *arvore = cria_ArvBin(); // arvore = raiz;
 
+/*
     struct Municipio municipios[27] = {
         {"Rio Branco", 8835.15, 389341},
         {"Maceio", 509.55, 957916},
@@ -36,13 +37,18 @@ int main(void) {
         {"Palmas", 2226.57, 306296}
     };
 
+
     for (int i = 0; i < 27; i++) {
         insere_ArvBin(arvore, municipios[i]);
     }
+*/
+    carregar_municipios(arvore, "municipios.csv");
 
+    printf("-----------------\n");
+    printf("Impressao em Ordem Alfabetica:\n");
     printAlfabeticamente_ArvBin(arvore);
     printf("-----------------\n");
-    printf("Numero de Municipios: %d", contarMunicipios(arvore));
+    printf("Numero de Municipios: %d\n", contarMunicipios(arvore));
     printf("-----------------\n");
     printf("Cidades com mais de 1.000.000 habitantes:\n");
     mostrarPopulacaoMaiorQue(arvore, 1000000);
