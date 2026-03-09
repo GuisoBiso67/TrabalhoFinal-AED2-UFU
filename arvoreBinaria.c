@@ -18,6 +18,7 @@ ArvBin* cria_ArvBin(){
     return raiz;
 }
 
+// liberar memoria
 void libera_NO(struct NO* no){
     if(no == NULL)
         return;
@@ -42,7 +43,7 @@ int altura_NO(struct NO* no){
 }
 
 int fatorBalanceamento_NO(struct NO* no){
-    return labs(altura_NO(no->esq) - altura_NO(no->dir)); // labs = valor absoluto
+    return (altura_NO(no->esq) - altura_NO(no->dir));
 }
 
 int maior(int x, int y){
@@ -150,26 +151,6 @@ int insere_ArvBin(ArvBin* raiz, struct Municipio info){
     }
     atual->altura = maior(altura_NO(atual->esq),altura_NO(atual->dir)) + 1;
     return res;
-        /*
-        struct NO* atual = *raiz;
-        struct NO* ant = NULL;
-
-        while(atual != NULL){
-            ant = atual;
-
-            if(strcmp(novo->info.nome, atual->info.nome) == 0){ // se for igual, nem coloca o elemento, ele ja existe;
-                free(novo);
-                return 0; //elemento ja existe;
-            }
-
-            if(strcmp(novo->info.nome, atual->info.nome) > 0) atual = atual->dir; // vai para direita
-            else atual = atual->esq; // vai para esquerda
-        }
-
-        if(strcmp(novo->info.nome, ant->info.nome) > 0) ant->dir = novo;
-        else ant->esq = novo;
-        */
-    //return 1;
 }
 
 struct NO* remove_atual(struct NO* atual) {
@@ -231,7 +212,7 @@ void printAlfabeticamente_ArvBin(ArvBin *raiz){ // impressão emOrdem
         return;
     if(*raiz != NULL){
         printAlfabeticamente_ArvBin(&((*raiz)->esq));
-        printf("%s\n",(*raiz)->info.nome);
+        printf("%s, altura: %d\n",(*raiz)->info.nome, altura_NO((*raiz)));
         printAlfabeticamente_ArvBin(&((*raiz)->dir));
     }
 }
@@ -341,16 +322,23 @@ int buscaPorNome(ArvBin* raiz, char* nome) {
 }
 
 struct NO* encontrarMinimo(struct NO* no) {
-    struct NO* atual = no;
-    while (atual && atual->esq != NULL)
+    if (no == NULL) return NULL;
+
+    struct NO* ant = no;
+    struct NO* atual = no->esq;
+
+    while (atual != NULL) {
+        ant = atual;
         atual = atual->esq;
-    return atual;
+    }
+    return ant;
 }
 
 struct NO* removeMunicipio(ArvBin* raiz, char* nome) {
     if(raiz == NULL) return NULL;
     if(*raiz == NULL) return NULL;
 
+    // navega até o nó que precisa ser removido;
     if (strcmp((*raiz)->info.nome, nome) > 0) {
         (*raiz)->esq = removeMunicipio(&(*raiz)->esq, nome);
     }else if (strcmp((*raiz)->info.nome, nome) < 0) {
@@ -359,14 +347,16 @@ struct NO* removeMunicipio(ArvBin* raiz, char* nome) {
         if ((*raiz)->esq == NULL) {
             struct NO* temp = (*raiz)->dir;
             free(*raiz);
-            return temp;
+            return temp; // retorna só a raiz da sub-arvore direita
         }else if ((*raiz)->dir == NULL) {
             struct NO* temp = (*raiz)->esq;
             free(*raiz);
-            return temp;
+            return temp; // retorna só a raiz da sub-arvore esquerda
         }
 
+        // se o nó a ser removido tem filho esq e dir, ele caminha até o menor elemento da sub-arvore direita
         struct NO* temp = encontrarMinimo((*raiz)->dir);
+        // copia info do menor da subárvore direita (sucessor); é como se ele trocasse o removido com o ultimo de lugar; pra EU lembrar: tipo um heap;
         (*raiz)->info = temp->info;
         /*
         A linha "(*raiz)->dir = removeMunicipio(&(*raiz)->dir, temp->info);" é o que faz funcionar.
@@ -375,8 +365,19 @@ struct NO* removeMunicipio(ArvBin* raiz, char* nome) {
         o que significa que essa segunda chamada de remoção cairá obrigatoriamente no caso 1 ou 2,
         sendo resolvida instantaneamente.
          */
-        (*raiz)->dir = removeMunicipio(&(*raiz)->dir, temp->info.nome);
+        (*raiz)->dir = removeMunicipio(&(*raiz)->dir, temp->info.nome); // vai cair no caso em que um dos filhos é null;
     }
+
+    // rebalanceando a arvore:
+    if (*raiz == NULL) return *raiz; // para nao dar problema em atualizar a altura;
+    (*raiz)->altura = 1 + maior(altura_NO((*raiz)->esq), altura_NO((*raiz)->dir));
+    int fb = fatorBalanceamento_NO(*raiz);
+
+    if (fb > 1 && fatorBalanceamento_NO((*raiz)->esq) >= 0) RotacaoRR(raiz);
+    else if (fb > 1 && fatorBalanceamento_NO((*raiz)->esq) < 0) RotacaoLR(raiz);
+    else if (fb < -1 && fatorBalanceamento_NO((*raiz)->dir) <= 0) RotacaoLL(raiz);
+    else if (fb < -1 && fatorBalanceamento_NO((*raiz)->dir) > 0) RotacaoRL(raiz);
+
     return *raiz;
 }
 
@@ -421,59 +422,4 @@ int carregar_municipios(ArvBin *A, const char *filename) {
     fclose(file);
     return 1;
 }
-
-
-
-
-
-
-// VER SE PRECISA DEPOIS
-
-/*
-
-int altura_ArvBin(ArvBin *raiz){
-    if (raiz == NULL)
-        return 0;
-    if (*raiz == NULL)
-        return 0;
-    int alt_esq = altura_ArvBin(&((*raiz)->esq));
-    int alt_dir = altura_ArvBin(&((*raiz)->dir));
-
-    if (alt_esq > alt_dir) return (alt_esq + 1);
-    else return(alt_dir + 1);
-}
-
-int consulta_ArvBin(ArvBin *raiz, struct Municipio info){
-    if(raiz == NULL)
-        return 0;
-    struct NO* atual = *raiz;
-    while(atual != NULL){
-        if (strcmp(info.nome, atual->info.nome) == 0) return 1;
-
-        if (strcmp(info.nome, atual->info.nome) > 0) atual = atual->dir;
-        else atual = atual->esq;
-    }
-    return 0;
-}
-
-void preOrdem_ArvBin(ArvBin *raiz){
-    if(raiz == NULL)
-        return;
-    if(*raiz != NULL){
-        printf("%s\n",(*raiz)->info.nome);
-        preOrdem_ArvBin(&((*raiz)->esq));
-        preOrdem_ArvBin(&((*raiz)->dir));
-    }
-}
-
-void posOrdem_ArvBin(ArvBin *raiz){
-    if(raiz == NULL)
-        return;
-    if(*raiz != NULL){
-        posOrdem_ArvBin(&((*raiz)->esq));
-        posOrdem_ArvBin(&((*raiz)->dir));
-        printf("%s\n",(*raiz)->info.nome);
-    }
-}
-*/
 
